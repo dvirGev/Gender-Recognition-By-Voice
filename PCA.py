@@ -3,13 +3,13 @@ import numpy as np
 
 
 
-def indealcomp(explained_variance_ratio_, plot=False):
+def plotPCA(explained_variance_ratio_):
     # % matplotlib inline
     # import matplotlib.pyplot as plt
     plt.rcParams["figure.figsize"] = (12,6)
 
     fig, ax = plt.subplots()
-    xi = np.arange(1, 706, step=1)
+    xi = np.arange(1, 123, step=1)
     y = np.cumsum(explained_variance_ratio_)
 
     plt.ylim(0.0,1.1)
@@ -25,10 +25,12 @@ def indealcomp(explained_variance_ratio_, plot=False):
 
     ax.grid(axis='x')
 
-    if plot:
-        plt.show()
+    plt.show()
+
+def indealcomp(explained_variance_ratio):
+    y =  np.cumsum(explained_variance_ratio)
     for x in range(len(y)):
-        if y[x] > 0.95:
+        if y[x] > 0.999:
             print(f'~~~We choose to take the feachers between 0 to {x}~~~')
             return x
-    
+    return len(y)

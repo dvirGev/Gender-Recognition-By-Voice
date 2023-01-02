@@ -6,6 +6,8 @@ import shutil
 import librosa
 from tqdm import tqdm
 
+from fromSali import xVector
+
 
 def extract_feature(file_name, **kwargs):
     """
@@ -43,7 +45,7 @@ def extract_feature(file_name, **kwargs):
     if tonnetz:
         tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sample_rate).T,axis=0)
         result = np.hstack((result, tonnetz))
-    return result
+    return np.append(result, xVector(file_name), axis=None)
 
 dirname = "data"
 

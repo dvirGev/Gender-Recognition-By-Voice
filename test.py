@@ -6,12 +6,12 @@ import numpy as np
 from sys import byteorder
 from array import array
 from struct import pack
-
-
+from fromSali import xVector
+import pickle as pk
 THRESHOLD = 500
 CHUNK_SIZE = 1024
 FORMAT = pyaudio.paInt16
-RATE = 16000
+RATE = 16000//2
 
 SILENCE = 30
 
@@ -118,8 +118,6 @@ def record_to_file(path):
     wf.writeframes(data)
     wf.close()
 
-
-
 def extract_feature(file_name, **kwargs):
     """
     Extract feature from audio file `file_name`
@@ -138,6 +136,7 @@ def extract_feature(file_name, **kwargs):
     contrast = kwargs.get("contrast")
     tonnetz = kwargs.get("tonnetz")
     X, sample_rate = librosa.core.load(file_name)
+    # print(sample_rate)
     if chroma or contrast:
         stft = np.abs(librosa.stft(X))
     result = np.array([])
@@ -148,7 +147,8 @@ def extract_feature(file_name, **kwargs):
         chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sample_rate).T,axis=0)
         result = np.hstack((result, chroma))
     if mel:
-        mel = np.mean(librosa.feature.melspectrogram(X, sr=sample_rate).T,axis=0)
+        mel = np.mean(librosa.feature.melspectrogram(y=X, sr=sample_rate).T,axis=0)
+        # print(mel)
         result = np.hstack((result, mel))
     if contrast:
         contrast = np.mean(librosa.feature.spectral_contrast(S=stft, sr=sample_rate).T,axis=0)
@@ -156,8 +156,9 @@ def extract_feature(file_name, **kwargs):
     if tonnetz:
         tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sample_rate).T,axis=0)
         result = np.hstack((result, tonnetz))
+    print("the len of feat in the extract features " , len(result))
+    result = np.append(result, xVector(file_name), axis=None)
     return result
-
 
 if __name__ == "__main__":
     # load the saved model (after training)
@@ -170,7 +171,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     file = args.file
     # construct the model
-    model = create_model()
+    model = create_model(vector_length=705)
     # load the saved/trained weights
     model.load_weights("results/model.h5")
     if not file or not os.path.isfile(file):
@@ -181,11 +182,24 @@ if __name__ == "__main__":
         # record the file (start talking)
         record_to_file(file)
     # extract features and reshape it
-    features = extract_feature(file, mel=True).reshape(1, -1)
-    # predict the gender!
-    male_prob = model.predict(features)[0][0]
+    features = extract_feature(file, mfcc=True, chroma=True, mel=True, contrast=True, tonnetz=True).reshape(1, -1)
+    # import pickle as pk
+    # sc_reload = pk.load(open("sc.pkl",'rb'))
+    # pca_reload = pk.load(open("pca.pkl",'rb'))
+
+    # features = sc_reload.transform(features)
+    # features = pca_reload.transform(features)
+    # from PCA import plotPCA
+    # plotPCA(pca_reload.explained_variance_ratio_)
+
+
+    #print(model.predict(features))
+    male_prob = model.predict(features)[0][0] 
+    # model.predict(features)
+    print(male_prob)
     female_prob = 1 - male_prob
-    gender = "male" if male_prob > female_prob else "female"
+    gender = "male" if male_prob >= female_prob else "female"
     # show the result!
     print("Result:", gender)
     print(f"Probabilities:     Male: {male_prob*100:.2f}%    Female: {female_prob*100:.2f}%")
+

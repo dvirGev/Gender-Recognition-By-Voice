@@ -6,7 +6,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, Dropout
 from sklearn.model_selection import train_test_split
 from test import extract_feature
-from fromSali import xVector
+
 label2int = {
     "male": 1,
     "female": 0
@@ -41,8 +41,8 @@ def load_data(vector_length=705):
     # initialize an empty array for all audio labels (1 for male and 0 for female)
     y = np.zeros((n_samples, 1))
     for i, (filename, gender) in tqdm.tqdm(enumerate(zip(df['filename'], df['gender'])), "Loading data", total=n_samples):
-        features = extract_feature(filename, mel=True, chroma=True, contrast=True, mfcc=True, tonnetz=True).reshape(1, -1)
-        X[i] = np.append(features, xVector(filename), axis=None)
+        features =  extract_feature(filename, mfcc=True, chroma=True, mel=True, contrast=True, tonnetz=True).reshape(1, -1)
+        X[i] = features
         y[i] = label2int[gender]
     # save the audio features and labels into files
     # so we won't load each one of them next run
@@ -69,23 +69,58 @@ def split_data(X, y, test_size=0.1, valid_size=0.1):
 
 def create_model(vector_length=705):
     """5 hidden dense layers from 256 units to 64, not the best model, but not bad."""
+    # model = Sequential()
+    # model.add(Dense(256, input_shape=(vector_length,)))
+    # model.add(Dropout(0.3))
+    # model.add(Dense(128, activation="relu"))
+    # model.add(Dropout(0.3))
+    # model.add(Dense(128, activation="relu"))
+    # model.add(Dropout(0.5))
+    # model.add(Dense(64, activation="relu"))
+    # model.add(Dropout(0.5))
+    # model.add(Dense(64, activation="relu"))
+    # model.add(Dropout(0.5))
+    # # one output neuron with sigmoid activation function, 0 means female, 1 means male
+    # model.add(Dense(1, activation="sigmoid"))
+    # # using binary crossentropy as it's male/female classification (binary)
+    # model.compile(loss="binary_crossentropy", metrics=["accuracy"], optimizer="adam")
+    # # print summary of the model
+    # model.summary()
+    # from sklearn.datasets import load_diabetes
+    # from sklearn.model_selection import train_test_split
+    
+    # from tensorflow.keras.models import Sequential
+    # from tensorflow.keras.layers import Dropout, Dense, BatchNormalization
+    # from tensorflow.keras import regularizers
+    # wd = 0.0001
+    # rate = 0.1
+ 
+    # model = Sequential([
+    #         Dense(128, kernel_regularizer=regularizers.l2(wd), activation="relu", input_shape=(vector_length,)),
+    #         BatchNormalization(),
+    #         Dropout(rate),
+    #         Dense(128, kernel_regularizer=regularizers.l2(wd), activation="relu"),
+    #         Dropout(rate),
+    #         Dense(128, kernel_regularizer=regularizers.l2(wd), activation="relu"),
+    #         Dropout(rate),
+    #         Dense(128, kernel_regularizer=regularizers.l2(wd), activation="relu"),
+    #         Dropout(rate),
+    #         Dense(128, kernel_regularizer=regularizers.l2(wd), activation="relu"),
+    #         Dropout(rate),
+    #         Dense(128, kernel_regularizer=regularizers.l2(wd), activation="relu"),
+    #         Dense(1)
+    #     ])
+    
+    # model.summary()
+    # model.compile(optimizer='adam', loss='mse', metrics=['mae'])
     model = Sequential()
-    model.add(Dense(256, input_shape=(vector_length,)))
-    model.add(Dropout(0.3))
-    model.add(Dense(256, activation="relu"))
-    model.add(Dropout(0.3))
-    model.add(Dense(128, activation="relu"))
-    model.add(Dropout(0.3))
-    model.add(Dense(128, activation="relu"))
-    model.add(Dropout(0.3))
-    model.add(Dense(64, activation="relu"))
-    model.add(Dropout(0.3))
-    model.add(Dense(64, activation="relu"))
-    model.add(Dropout(0.3))
-    # one output neuron with sigmoid activation function, 0 means female, 1 means male
-    model.add(Dense(1, activation="sigmoid"))
-    # using binary crossentropy as it's male/female classification (binary)
-    model.compile(loss="binary_crossentropy", metrics=["accuracy"], optimizer="adam")
-    # print summary of the model
-    model.summary()
+    model.add(Dense(512, input_dim=vector_length, activation='relu'))
+    model.add(Dense(256, activation='relu'))
+    model.add(Dense(128, activation='relu'))
+    model.add(Dense(64, activation='relu'))
+    model.add(Dense(32, activation='relu'))
+    model.add(Dense(16, activation='relu'))
+    model.add(Dense(1, activation='sigmoid'))
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
     return model
