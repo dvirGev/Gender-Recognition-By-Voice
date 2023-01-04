@@ -13,7 +13,7 @@ label2int = {
 }
 
 
-def load_data(vector_length=705):
+def load_data(vector_length=128):
     """A function to load gender recognition dataset from `data` folder
     After the second run, this will load from results/features.npy and results/labels.npy files
     as it is much faster!"""
@@ -113,13 +113,21 @@ def create_model(vector_length=705):
     
     # model.summary()
     # model.compile(optimizer='adam', loss='mse', metrics=['mae'])
+    #שיניתי גם את המודל, לא יודע אם להחזיר
+
     model = Sequential()
     model.add(Dense(512, input_dim=vector_length, activation='relu'))
+    model.add(Dropout(0.55))
     model.add(Dense(256, activation='relu'))
+    model.add(Dropout(0.55))
     model.add(Dense(128, activation='relu'))
+    model.add(Dropout(0.55))
     model.add(Dense(64, activation='relu'))
+    model.add(Dropout(0.55))
     model.add(Dense(32, activation='relu'))
+    model.add(Dropout(0.55))
     model.add(Dense(16, activation='relu'))
+    model.add(Dropout(0.55))
     model.add(Dense(1, activation='sigmoid'))
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 

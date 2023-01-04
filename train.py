@@ -1,4 +1,6 @@
 import os
+
+import numpy as np
 from preparation import extract_feature
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard, EarlyStopping
 from utils import load_data, split_data, create_model
@@ -23,53 +25,37 @@ early_stopping = EarlyStopping(mode="min", patience=5, restore_best_weights=True
 batch_size = 32
 epochs = 100 #66938 #9572*4
 
+np.save("X_train", data["X_train"])
 
 """Step 4 - make the first sort of the vector, and   """
-# # performing preprocessing part
-# from sklearn.preprocessing import MinMaxScaler
-# mm = MinMaxScaler()
-# data["X_train"] = mm.fit_transform(data["X_train"])
-# data["X_valid"] = mm.transform(data["X_valid"])
-# data["X_test"] = mm.transform(data["X_test"])
-# performing preprocessing part
-
-# from sklearn.preprocessing import StandardScaler
-# sc = StandardScaler()
-# data["X_train"] = sc.fit_transform(data["X_train"])
-# data["X_valid"] = sc.transform(data["X_valid"])
-# data["X_test"] = sc.transform(data["X_test"])
+from sklearn.preprocessing import StandardScaler
+sc = StandardScaler()
+data["X_train"] = sc.fit_transform(data["X_train"])
+data["X_valid"] = sc.transform(data["X_valid"])
+data["X_test"] = sc.transform(data["X_test"])
 
 
 # """Step 5"""
-# # Applying PCA function on training
-# # and testing set of X component
-# from sklearn.decomposition import PCA
+# Applying PCA function on training
+# and testing set of X component
+from sklearn.decomposition import PCA
+pca = PCA()
+data["X_train"] = pca.fit_transform(data["X_train"])
+data["X_valid"] = pca.transform(data["X_valid"])
+data["X_test"] = pca.transform(data["X_test"])
 
-# pca = PCA()
+# plotPCA(pca.explained_variance_ratio_)
 
-# data["X_train"] = pca.fit_transform(data["X_train"])
-# data["X_valid"] = pca.transform(data["X_valid"])
-# data["X_test"] = pca.transform(data["X_test"])
-
-##plotPCA(pca.explained_variance_ratio_)
-
-vector_length =705 # indealcomp(pca.explained_variance_ratio_) #705
-# print(vector_length)
+vector_length = 148 # indealcomp(pca.explained_variance_ratio_) #705
+print(vector_length)
 # start_time = time.time()
 
-# pca = PCA(n_components=vector_length)
-
-# data["X_train"] = pca.fit_transform(data["X_train"])
-# data["X_valid"] = pca.transform(data["X_valid"])
-# data["X_test"] = pca.transform(data["X_test"])
-
-import pickle as pk
-"""This save our how to save the pca model and calc"""
-# pk.dump(sc, open("sc.pkl","wb"))
-# pk.dump(pca, open("pca.pkl","wb"))
+pca = PCA(n_components=vector_length)
+data["X_train"] = pca.fit_transform(data["X_train"])
+data["X_valid"] = pca.transform(data["X_valid"])
+data["X_test"] = pca.transform(data["X_test"])
 
 
-# pk.dump(pca, open("pca.pkl","wb"))
 # construct the model
 model = create_model(vector_length = vector_length)
 # train the model using the training set and validating using validation set
@@ -110,3 +96,13 @@ conf_matrix = confusion_matrix(y_true, y_pred)
 
 # Print the confusion matrix
 print(conf_matrix)
+
+Accuracy = (conf_matrix[0][0] + conf_matrix[1][1]) / ((conf_matrix[0][0] + conf_matrix[1]
+[1] + conf_matrix[0][1] + conf_matrix[1][0])) 
+Recall = conf_matrix[1][1] / (conf_matrix[1][1] + conf_matrix[1][0] )
+Precision = conf_matrix[1][1] / ((conf_matrix[0][1]) + conf_matrix[1][1])
+F1_score = 2*Recall*Precision / ((Recall + Precision))
+print(f'Accuracy {Accuracy*100:.2f}%')
+print(f'Recall {Recall*100:.2f}%')
+print(f'Precision {Precision*100:.2f}%')
+print(f'F1_score {F1_score*100:.2f}%')

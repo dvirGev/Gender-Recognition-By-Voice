@@ -11,8 +11,7 @@ import pickle as pk
 THRESHOLD = 500
 CHUNK_SIZE = 1024
 FORMAT = pyaudio.paInt16
-RATE = 16000//2
-
+RATE = int(16000//1.62)
 SILENCE = 30
 
 def is_silent(snd_data):
@@ -117,6 +116,35 @@ def record_to_file(path):
     wf.setframerate(RATE)
     wf.writeframes(data)
     wf.close()
+def file_to_file(path):
+    with wave.open(path, 'rb') as wav_file:
+        # Get the sample width
+        _sample_width = wav_file.getsampwidth()
+        # Get the frame rate
+        _frame_rate = wav_file.getframerate()
+        # Read the data from the wave file
+        _data = wav_file.readframes(wav_file.getnframes())
+        
+    _data = pack('<' + ('h'*len(_data)), *_data)
+    wf = wave.open('mtTest.wav', 'wb')
+    wf.setnchannels(1)
+    wf.setsampwidth(_sample_width)
+    wf.setframerate(wf.getnframes/2)
+    wf.writeframes(_data)
+    wf.close()
+import wave
+
+def modify_wave_file(input_path, output_path):
+    import wave
+
+    # Open the wave file in read mode
+    with wave.open('mtTest.wav', 'rb') as wf:
+        print()
+
+
+
+
+
 
 def extract_feature(file_name, **kwargs):
     """
@@ -156,7 +184,7 @@ def extract_feature(file_name, **kwargs):
     if tonnetz:
         tonnetz = np.mean(librosa.feature.tonnetz(y=librosa.effects.harmonic(X), sr=sample_rate).T,axis=0)
         result = np.hstack((result, tonnetz))
-    print("the len of feat in the extract features " , len(result))
+    # print("the len of feat in the extract features " , len(result))
     result = np.append(result, xVector(file_name), axis=None)
     return result
 
@@ -170,8 +198,9 @@ if __name__ == "__main__":
     parser.add_argument("-f", "--file", help="The path to the file, preferred to be in WAV format")
     args = parser.parse_args()
     file = args.file
+    name = file
     # construct the model
-    model = create_model(vector_length=705)
+    model = create_model(vector_length=182)
     # load the saved/trained weights
     model.load_weights("results/model.h5")
     if not file or not os.path.isfile(file):
@@ -183,12 +212,21 @@ if __name__ == "__main__":
         record_to_file(file)
     # extract features and reshape it
     features = extract_feature(file, mfcc=True, chroma=True, mel=True, contrast=True, tonnetz=True).reshape(1, -1)
-    # import pickle as pk
-    # sc_reload = pk.load(open("sc.pkl",'rb'))
-    # pca_reload = pk.load(open("pca.pkl",'rb'))
-
-    # features = sc_reload.transform(features)
-    # features = pca_reload.transform(features)
+    # import joblib
+    # sc_reload = joblib.load("sc.save")
+    # pca_reload = joblib.load("pca.save")
+    X_train = np.load('X_train.npy')
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.decomposition import PCA
+    sc = StandardScaler()
+    X_train = sc.fit_transform(X_train)
+    features = sc.transform(features)
+    pca = PCA()
+    X_train = pca.fit_transform(X_train)
+    features = pca.transform(features)
+    pca = PCA(n_components=182)
+    X_train = pca.fit_transform(X_train)
+    features = pca.transform(features)
     # from PCA import plotPCA
     # plotPCA(pca_reload.explained_variance_ratio_)
 
