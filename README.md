@@ -1,5 +1,5 @@
 # Gender Recognition using Voice
-To download us model that we are trained:
+For download the trained models that we are generate:
         
         https://drive.google.com/file/d/15_B0bBte-VZoHGbvnPpMhURG738XE2Nw/view?usp=sharing
 
