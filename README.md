@@ -3,6 +3,7 @@ To download us model that we are trained:
         
         https://drive.google.com/file/d/15_B0bBte-VZoHGbvnPpMhURG738XE2Nw/view?usp=sharing
 
+After download the file, exract him, choose a model and put features.npy labels.npy and model.h5 in result folder.
 #
 This repository is about building a deep learning model using TensorFlow 2 to recognize gender of a given speaker's audio. Read this [tutorial](https://www.thepythoncode.com/article/gender-recognition-by-voice-using-tensorflow-in-python) for more information.
 
