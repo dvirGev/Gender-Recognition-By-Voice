@@ -44,9 +44,14 @@ data["X_train"] = pca.fit_transform(data["X_train"])
 data["X_valid"] = pca.transform(data["X_valid"])
 data["X_test"] = pca.transform(data["X_test"])
 
+
 # plotPCA(pca.explained_variance_ratio_)
 
-vector_length = 148 # indealcomp(pca.explained_variance_ratio_) #705
+vector_length = indealcomp(pca.explained_variance_ratio_) #705
+# Open the file in write mode
+with open('vector_length.txt', 'w') as f:
+  # Convert the integer to a string and write it to the file
+  f.write(str(vector_length))
 print(vector_length)
 # start_time = time.time()
 
@@ -103,6 +108,6 @@ Recall = conf_matrix[1][1] / (conf_matrix[1][1] + conf_matrix[1][0] )
 Precision = conf_matrix[1][1] / ((conf_matrix[0][1]) + conf_matrix[1][1])
 F1_score = 2*Recall*Precision / ((Recall + Precision))
 print(f'Accuracy {Accuracy*100:.2f}%')
-print(f'Recall {Recall*100:.2f}%')
 print(f'Precision {Precision*100:.2f}%')
+print(f'Recall {Recall*100:.2f}%')
 print(f'F1_score {F1_score*100:.2f}%')

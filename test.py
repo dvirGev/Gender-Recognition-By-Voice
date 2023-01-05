@@ -199,8 +199,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
     file = args.file
     name = file
+    # Open the file in read mode
+    with open('vector_length.txt', 'r') as f:
+      vector_length = int(f.read())
     # construct the model
-    model = create_model(vector_length=182)
+    model = create_model(vector_length=vector_length)
     # load the saved/trained weights
     model.load_weights("results/model.h5")
     if not file or not os.path.isfile(file):
@@ -224,7 +227,7 @@ if __name__ == "__main__":
     pca = PCA()
     X_train = pca.fit_transform(X_train)
     features = pca.transform(features)
-    pca = PCA(n_components=182)
+    pca = PCA(n_components=vector_length)
     X_train = pca.fit_transform(X_train)
     features = pca.transform(features)
     # from PCA import plotPCA
