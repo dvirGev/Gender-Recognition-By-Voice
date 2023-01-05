@@ -215,20 +215,17 @@ if __name__ == "__main__":
         record_to_file(file)
     # extract features and reshape it
     features = extract_feature(file, mfcc=True, chroma=True, mel=True, contrast=True, tonnetz=True).reshape(1, -1)
-    # import joblib
-    # sc_reload = joblib.load("sc.save")
-    # pca_reload = joblib.load("pca.save")
-    X_train = np.load('X_train.npy')
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.decomposition import PCA
-    sc = StandardScaler()
-    X_train = sc.fit_transform(X_train)
+    # X_train = np.load('X_train.npy')
+    # from sklearn.preprocessing import StandardScaler
+    # from sklearn.decomposition import PCA
+    sc = pk.load(open("sc.pkl", 'rb'))#StandardScaler()
+    # X_train = sc.fit_transform(X_train)
     features = sc.transform(features)
-    pca = PCA()
-    X_train = pca.fit_transform(X_train)
+    pca = pk.load(open("pca1.pkl", 'rb'))#PCA()
+    # X_train = pca.fit_transform(X_train)
     features = pca.transform(features)
-    pca = PCA(n_components=vector_length)
-    X_train = pca.fit_transform(X_train)
+    pca = pca = pk.load(open("pca2.pkl", 'rb'))#PCA(n_components=vector_length)
+    # X_train = pca.fit_transform(X_train)
     features = pca.transform(features)
     # from PCA import plotPCA
     # plotPCA(pca_reload.explained_variance_ratio_)

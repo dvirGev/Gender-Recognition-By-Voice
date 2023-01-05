@@ -25,15 +25,13 @@ early_stopping = EarlyStopping(mode="min", patience=5, restore_best_weights=True
 batch_size = 32
 epochs = 100 #66938 #9572*4
 
-np.save("X_train", data["X_train"])
-
 """Step 4 - make the first sort of the vector, and   """
 from sklearn.preprocessing import StandardScaler
 sc = StandardScaler()
 data["X_train"] = sc.fit_transform(data["X_train"])
 data["X_valid"] = sc.transform(data["X_valid"])
 data["X_test"] = sc.transform(data["X_test"])
-
+pk.dump(sc, open("sc.pkl", "wb"))
 
 # """Step 5"""
 # Applying PCA function on training
@@ -43,7 +41,7 @@ pca = PCA()
 data["X_train"] = pca.fit_transform(data["X_train"])
 data["X_valid"] = pca.transform(data["X_valid"])
 data["X_test"] = pca.transform(data["X_test"])
-
+pk.dump(pca, open("pca1.pkl", "wb"))
 
 # plotPCA(pca.explained_variance_ratio_)
 
@@ -59,7 +57,7 @@ pca = PCA(n_components=vector_length)
 data["X_train"] = pca.fit_transform(data["X_train"])
 data["X_valid"] = pca.transform(data["X_valid"])
 data["X_test"] = pca.transform(data["X_test"])
-
+pk.dump(pca, open("pca2.pkl", "wb"))
 
 # construct the model
 model = create_model(vector_length = vector_length)
