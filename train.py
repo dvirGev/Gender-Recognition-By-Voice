@@ -23,7 +23,7 @@ tensorboard = TensorBoard(log_dir="logs")
 early_stopping = EarlyStopping(mode="min", patience=5, restore_best_weights=True)
 
 batch_size = 32
-epochs = 100 #66938 #9572*4
+epochs = 100
 
 """Step 4 - make the first sort of the vector, and   """
 from sklearn.preprocessing import StandardScaler
@@ -33,7 +33,7 @@ data["X_valid"] = sc.transform(data["X_valid"])
 data["X_test"] = sc.transform(data["X_test"])
 pk.dump(sc, open("sc.pkl", "wb"))
 
-# """Step 5"""
+"""Step 5"""
 # Applying PCA function on training
 # and testing set of X component
 from sklearn.decomposition import PCA
@@ -51,7 +51,7 @@ with open('vector_length.txt', 'w') as f:
   # Convert the integer to a string and write it to the file
   f.write(str(vector_length))
 print(vector_length)
-# start_time = time.time()
+
 
 pca = PCA(n_components=vector_length)
 data["X_train"] = pca.fit_transform(data["X_train"])
@@ -61,10 +61,11 @@ pk.dump(pca, open("pca2.pkl", "wb"))
 
 # construct the model
 model = create_model(vector_length = vector_length)
+start_time = time.time()
 # train the model using the training set and validating using validation set
 model.fit(data["X_train"], data["y_train"], epochs=epochs, batch_size=batch_size, validation_data=(data["X_valid"], data["y_valid"]),
           callbacks=[tensorboard, early_stopping])
-
+print("--- %s seconds ---" % (time.time() - start_time))
 # save the model to a file
 model.save("results/model.h5")
 
@@ -74,7 +75,7 @@ loss, accuracy = model.evaluate(data["X_test"], data["y_test"], verbose=0)
 print(f"Loss: {loss:.4f}")
 print(f"Accuracy: {accuracy*100:.2f}%")
 
-# print("--- %s seconds ---" % (time.time() - start_time))
+
 
 n_male_samples = len([i for i in y if i == 1])
 # get total female samples

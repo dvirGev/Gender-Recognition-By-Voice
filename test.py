@@ -8,143 +8,10 @@ from array import array
 from struct import pack
 from fromSali import xVector
 import pickle as pk
-THRESHOLD = 500
-CHUNK_SIZE = 1024
-FORMAT = pyaudio.paInt16
-RATE = int(16000//1.62)
-SILENCE = 30
 
-def is_silent(snd_data):
-    "Returns 'True' if below the 'silent' threshold"
-    return max(snd_data) < THRESHOLD
-
-def normalize(snd_data):
-    "Average the volume out"
-    MAXIMUM = 16384
-    times = float(MAXIMUM)/max(abs(i) for i in snd_data)
-
-    r = array('h')
-    for i in snd_data:
-        r.append(int(i*times))
-    return r
-
-def trim(snd_data):
-    "Trim the blank spots at the start and end"
-    def _trim(snd_data):
-        snd_started = False
-        r = array('h')
-
-        for i in snd_data:
-            if not snd_started and abs(i)>THRESHOLD:
-                snd_started = True
-                r.append(i)
-
-            elif snd_started:
-                r.append(i)
-        return r
-
-    # Trim to the left
-    snd_data = _trim(snd_data)
-
-    # Trim to the right
-    snd_data.reverse()
-    snd_data = _trim(snd_data)
-    snd_data.reverse()
-    return snd_data
-
-def add_silence(snd_data, seconds):
-    "Add silence to the start and end of 'snd_data' of length 'seconds' (float)"
-    r = array('h', [0 for i in range(int(seconds*RATE))])
-    r.extend(snd_data)
-    r.extend([0 for i in range(int(seconds*RATE))])
-    return r
-
-def record():
-    """
-    Record a word or words from the microphone and 
-    return the data as an array of signed shorts.
-    Normalizes the audio, trims silence from the 
-    start and end, and pads with 0.5 seconds of 
-    blank sound to make sure VLC et al can play 
-    it without getting chopped off.
-    """
-    p = pyaudio.PyAudio()
-    stream = p.open(format=FORMAT, channels=1, rate=RATE,
-        input=True, output=True,
-        frames_per_buffer=CHUNK_SIZE)
-
-    num_silent = 0
-    snd_started = False
-
-    r = array('h')
-
-    while 1:
-        # little endian, signed short
-        snd_data = array('h', stream.read(CHUNK_SIZE))
-        if byteorder == 'big':
-            snd_data.byteswap()
-        r.extend(snd_data)
-
-        silent = is_silent(snd_data)
-
-        if silent and snd_started:
-            num_silent += 1
-        elif not silent and not snd_started:
-            snd_started = True
-
-        if snd_started and num_silent > SILENCE:
-            break
-
-    sample_width = p.get_sample_size(FORMAT)
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
-
-    r = normalize(r)
-    r = trim(r)
-    r = add_silence(r, 0.5)
-    return sample_width, r
-
-def record_to_file(path):
-    "Records from the microphone and outputs the resulting data to 'path'"
-    sample_width, data = record()
-    data = pack('<' + ('h'*len(data)), *data)
-
-    wf = wave.open(path, 'wb')
-    wf.setnchannels(1)
-    wf.setsampwidth(sample_width)
-    wf.setframerate(RATE)
-    wf.writeframes(data)
-    wf.close()
-def file_to_file(path):
-    with wave.open(path, 'rb') as wav_file:
-        # Get the sample width
-        _sample_width = wav_file.getsampwidth()
-        # Get the frame rate
-        _frame_rate = wav_file.getframerate()
-        # Read the data from the wave file
-        _data = wav_file.readframes(wav_file.getnframes())
-        
-    _data = pack('<' + ('h'*len(_data)), *_data)
-    wf = wave.open('mtTest.wav', 'wb')
-    wf.setnchannels(1)
-    wf.setsampwidth(_sample_width)
-    wf.setframerate(wf.getnframes/2)
-    wf.writeframes(_data)
-    wf.close()
-import wave
-
-def modify_wave_file(input_path, output_path):
-    import wave
-
-    # Open the wave file in read mode
-    with wave.open('mtTest.wav', 'rb') as wf:
-        print()
-
-
-
-
-
+def convertFileToWav(file):
+    # newName = file.replace('.ogg', '.wav')
+    os.system(f"ffmpeg -i {file} test.wav")
 
 def extract_feature(file_name, **kwargs):
     """
@@ -190,7 +57,6 @@ def extract_feature(file_name, **kwargs):
 
 if __name__ == "__main__":
     # load the saved model (after training)
-    # model = pickle.load(open("result/mlp_classifier.model", "rb"))
     from utils import load_data, split_data, create_model
     import argparse
     parser = argparse.ArgumentParser(description="""Gender recognition script, this will load the model you trained, 
@@ -207,31 +73,18 @@ if __name__ == "__main__":
     # load the saved/trained weights
     model.load_weights("results/model.h5")
     if not file or not os.path.isfile(file):
-        # if file not provided, or it doesn't exist, use your voice
-        print("Please talk")
-        # put the file name here
-        file = "test.wav"
-        # record the file (start talking)
-        record_to_file(file)
+        raise ValueError("there is no file")
+    convertFileToWav(file)
     # extract features and reshape it
+    file = "test.wav"
     features = extract_feature(file, mfcc=True, chroma=True, mel=True, contrast=True, tonnetz=True).reshape(1, -1)
-    # X_train = np.load('X_train.npy')
-    # from sklearn.preprocessing import StandardScaler
-    # from sklearn.decomposition import PCA
-    sc = pk.load(open("sc.pkl", 'rb'))#StandardScaler()
-    # X_train = sc.fit_transform(X_train)
+    sc = pk.load(open("sc.pkl", 'rb'))
     features = sc.transform(features)
-    pca = pk.load(open("pca1.pkl", 'rb'))#PCA()
-    # X_train = pca.fit_transform(X_train)
+    pca = pk.load(open("pca1.pkl", 'rb'))
     features = pca.transform(features)
-    pca = pca = pk.load(open("pca2.pkl", 'rb'))#PCA(n_components=vector_length)
-    # X_train = pca.fit_transform(X_train)
+    pca = pca = pk.load(open("pca2.pkl", 'rb'))
     features = pca.transform(features)
-    # from PCA import plotPCA
-    # plotPCA(pca_reload.explained_variance_ratio_)
 
-
-    #print(model.predict(features))
     male_prob = model.predict(features)[0][0] 
     # model.predict(features)
     print(male_prob)
